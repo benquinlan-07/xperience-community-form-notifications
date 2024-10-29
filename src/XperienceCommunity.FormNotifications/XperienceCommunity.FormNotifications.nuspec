@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+	<metadata>
+		<id>XperienceCommunity.FormNotifications</id>
+		<authors>Ben Quinlan</authors>
+		<version>$version</version>
+		<projectUrl>https://github.com/benquinlan-07/XperienceCommunity.FormNotifications</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>Extension for Xperience by Kentico to allow for easy configuration of emails for sending autoresponders and notifications in a similar format to KX13.</description>
+		<readme>docs\README.md</readme>
+		<license type="file">licenses\LICENSE.md</license>
+		<dependencies>
+			<dependency id="kentico.xperience.admin" version="29.5.3" />
+		</dependencies>
+	</metadata>
+    <files>
+        <file src="..\..\README.md" target="docs\" />
+        <file src="..\..\LICENSE.md" target="licenses\" />
+        <file src="bin\Release\net6.0\XperienceCommunity.FormNotifications.dll" target="lib\net6.0" />
+    </files>
+</package>
