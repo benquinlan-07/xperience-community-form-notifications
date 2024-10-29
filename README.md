@@ -6,7 +6,7 @@ This package provides Xperience by Kentico administrators with an interface to m
 
 One particular feature of note within this extension is that it has been extended to support the use of adding form data into email templates by way of macro expressions. Similar to the behaviour of KX13 and prior versions, macro expressions defined in the recipients, subject or the content of the email will be resolved where they match a field name set within the form structure.
 
-![Xperience by Kentico Form Notifications](https://github.com/benquinlan-07/xperience-community-form-notifications/blob/main/images/domain-aliases.jpeg?raw=true)
+![Xperience by Kentico Form Notifications](https://github.com/benquinlan-07/xperience-community-form-notifications/blob/main/images/form-notifications.jpeg?raw=true)
 
 ## Requirements
 
@@ -58,7 +58,7 @@ Install-Package XperienceCommunity.FormNotifications
 1. Create or edit a form.
 
 1. Select the Emails option from the menu on the right side of the screen.
-![Xperience by Kentico Form Notifications](https://github.com/benquinlan-07/xperience-community-form-notifications/blob/main/images/domain-aliases.jpeg?raw=true)
+![Xperience by Kentico Form Notifications](https://github.com/benquinlan-07/xperience-community-form-notifications/blob/main/images/form-notifications.jpeg?raw=true)
 
 1. Configure your preferred notification settings.
 
