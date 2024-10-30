@@ -95,7 +95,7 @@ namespace XperienceCommunity.FormNotifications.Services
                 if (contact != null && formNotification.FormNotificationSendEmailAutoresponder)
                 {
                     var recipient = new Recipient { FirstName = contact.ContactFirstName, LastName = contact.ContactLastName, Email = contact.ContactEmail };
-                    var dataContext = new AutomationEmailDataContext() { Recipient = recipient, Contact = contact};
+                    var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient, ContactGuid = contact.ContactGUID };
                     await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, contact.ContactEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver);
                 }
 
@@ -103,7 +103,7 @@ namespace XperienceCommunity.FormNotifications.Services
                 if (formNotification.FormNotificationSendEmailNotification)
                 {
                     var recipient = new Recipient { Email = formNotification.FormNotificationEmailNotificationRecipient };
-                    var dataContext = new AutomationEmailDataContext() { Recipient = recipient };
+                    var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient };
                     await SendEmail(formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver);
                 }
             }
@@ -148,7 +148,7 @@ namespace XperienceCommunity.FormNotifications.Services
             await _emailService.SendEmail(toSend);
         }
 
-        public string ResolveMacros(MacroResolver macroResolver, string content)
+        private string ResolveMacros(MacroResolver macroResolver, string content)
         {
             // Include support for anyone copying form placeholders from previous environments by changing $$label:FieldName$$ and $$value:FieldName$$ to {% label_FieldName %} and {% value_FieldName %}
             var oldFormatRegex = new Regex("\\$\\$(value|label):([a-zA-Z0-9]+)\\$\\$");
@@ -165,7 +165,7 @@ namespace XperienceCommunity.FormNotifications.Services
             return emailSpecificFieldValues;
         }
 
-        public async Task<MailAddress> GetSenderMailAddress(EmailContentTypeSpecificFieldValues values)
+        private async Task<MailAddress> GetSenderMailAddress(EmailContentTypeSpecificFieldValues values)
         {
             var sender = await _emailChannelSenderInfoProvider.GetAsync<EmailChannelSenderInfo>(values.EmailSenderID);
             return new MailAddress(await GetEmailAddress(sender.EmailChannelSenderName, sender.EmailChannelSenderEmailChannelID), sender.EmailChannelSenderDisplayName);

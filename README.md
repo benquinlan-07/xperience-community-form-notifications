@@ -14,7 +14,8 @@ One particular feature of note within this extension is that it has been extende
 
 | Xperience Version | Library Version |
 | ----------------- | --------------- |
-| >= 29.5.3         | 1.0.0           |
+| >= 29.6.0         | 1.1.0           |
+| 29.5.3            | 1.0.0           |
 
 ### Dependencies
 
