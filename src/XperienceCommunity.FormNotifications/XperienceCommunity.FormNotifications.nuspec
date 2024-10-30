@@ -10,7 +10,7 @@
 		<readme>docs\README.md</readme>
 		<license type="file">licenses\LICENSE.md</license>
 		<dependencies>
-			<dependency id="kentico.xperience.admin" version="29.5.3" />
+			<dependency id="kentico.xperience.admin" version="29.6.0" />
 		</dependencies>
 	</metadata>
     <files>
