@@ -4,7 +4,7 @@
 		<id>XperienceCommunity.FormNotifications</id>
 		<authors>Ben Quinlan</authors>
 		<version>$version</version>
-		<projectUrl>https://github.com/benquinlan-07/XperienceCommunity.FormNotifications</projectUrl>
+		<projectUrl>https://github.com/benquinlan-07/xperience-community-form-notifications</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>Extension for Xperience by Kentico to allow for easy configuration of emails for sending autoresponders and notifications in a similar format to KX13.</description>
 		<readme>docs\README.md</readme>
