@@ -84,7 +84,7 @@ internal class ExtensionModuleInstaller
         formItem = new FormFieldInfo
         {
             Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationRecipient),
-            AllowEmpty = false,
+            AllowEmpty = true,
             Visible = true,
             Size = 500,
             DataType = "text"
@@ -94,7 +94,7 @@ internal class ExtensionModuleInstaller
         formItem = new FormFieldInfo
         {
             Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationSubject),
-            AllowEmpty = false,
+            AllowEmpty = true,
             Visible = true,
             Size = 500,
             DataType = "text"
@@ -104,7 +104,7 @@ internal class ExtensionModuleInstaller
         formItem = new FormFieldInfo
         {
             Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationTemplate),
-            AllowEmpty = false,
+            AllowEmpty = true,
             Visible = true,
             Precision = 0,
             DataType = "guid",
@@ -124,7 +124,7 @@ internal class ExtensionModuleInstaller
         formItem = new FormFieldInfo
         {
             Name = nameof(FormNotificationInfo.FormNotificationEmailAutoresponderSubject),
-            AllowEmpty = false,
+            AllowEmpty = true,
             Visible = true,
             Size = 500,
             DataType = "text"
@@ -134,7 +134,7 @@ internal class ExtensionModuleInstaller
         formItem = new FormFieldInfo
         {
             Name = nameof(FormNotificationInfo.FormNotificationEmailAutoresponderTemplate),
-            AllowEmpty = false,
+            AllowEmpty = true,
             Visible = true,
             Precision = 0,
             DataType = "guid",
