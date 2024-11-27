@@ -129,6 +129,17 @@ public partial class FormNotificationInfo : AbstractInfo<FormNotificationInfo, I
     /// Form notification path.
     /// </summary>
     [DatabaseField]
+    public virtual string FormNotificationEmailAutoresponderRecipientEmailField
+    {
+        get => ValidationHelper.GetString(GetValue(nameof(FormNotificationEmailAutoresponderRecipientEmailField)), default);
+        set => SetValue(nameof(FormNotificationEmailAutoresponderRecipientEmailField), value);
+    }
+
+
+    /// <summary>
+    /// Form notification path.
+    /// </summary>
+    [DatabaseField]
     public virtual string FormNotificationEmailAutoresponderSubject
     {
         get => ValidationHelper.GetString(GetValue(nameof(FormNotificationEmailAutoresponderSubject)), default);

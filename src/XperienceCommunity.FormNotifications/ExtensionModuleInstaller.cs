@@ -83,6 +83,16 @@ internal class ExtensionModuleInstaller
 
         formItem = new FormFieldInfo
         {
+            Name = nameof(FormNotificationInfo.FormNotificationEmailAutoresponderRecipientEmailField),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
             Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationRecipient),
             AllowEmpty = true,
             Visible = true,

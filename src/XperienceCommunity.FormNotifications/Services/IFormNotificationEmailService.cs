@@ -27,7 +27,6 @@ namespace XperienceCommunity.FormNotifications.Services
         private readonly IEmailService _emailService;
         private readonly IEmailTemplateMergeService _emailTemplateMergeService;
         private readonly IEmailContentResolver _emailContentResolver;
-        private readonly ICurrentContactProvider _currentContactProvider;
         private readonly IContentItemDataInfoRetriever _contentItemDataInfoRetriever;
         private readonly IEmailChannelLanguageRetriever _emailChannelLanguageRetriever;
         private readonly IInfoProvider<EmailConfigurationInfo> _emailConfigurationInfoProvider;
@@ -40,7 +39,6 @@ namespace XperienceCommunity.FormNotifications.Services
             IEmailService emailService,
             IEmailTemplateMergeService emailTemplateMergeService,
             IEmailContentResolver emailContentResolver,
-            ICurrentContactProvider currentContactProvider,
             IContentItemDataInfoRetriever contentItemDataInfoRetriever,
             IEmailChannelLanguageRetriever emailChannelLanguageRetriever,
             IInfoProvider<EmailConfigurationInfo> emailConfigurationInfoProvider,
@@ -53,7 +51,6 @@ namespace XperienceCommunity.FormNotifications.Services
             _emailService = emailService;
             _emailTemplateMergeService = emailTemplateMergeService;
             _emailContentResolver = emailContentResolver;
-            _currentContactProvider = currentContactProvider;
             _contentItemDataInfoRetriever = contentItemDataInfoRetriever;
             _emailChannelLanguageRetriever = emailChannelLanguageRetriever;
             _emailConfigurationInfoProvider = emailConfigurationInfoProvider;
@@ -91,12 +88,27 @@ namespace XperienceCommunity.FormNotifications.Services
                 }
 
                 // Send the autoresponder email
-                var contact = _currentContactProvider.GetCurrentContact();
-                if (contact != null && formNotification.FormNotificationSendEmailAutoresponder)
+                if (formNotification.FormNotificationSendEmailAutoresponder)
                 {
-                    var recipient = new Recipient { FirstName = contact.ContactFirstName, LastName = contact.ContactLastName, Email = contact.ContactEmail };
-                    var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient, ContactGuid = contact.ContactGUID };
-                    await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, contact.ContactEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver);
+                    var emailFormField = bizFormItem.BizFormInfo.Form.GetFormField(formNotification.FormNotificationEmailAutoresponderRecipientEmailField);
+                    if (emailFormField != null)
+                    {
+                        var recipientEmail = bizFormItem[emailFormField.Name] as string;
+                        if (!string.IsNullOrWhiteSpace(recipientEmail))
+                        {
+                            var recipient = new Recipient { Email = recipientEmail };
+                            var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient };
+                            await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver);
+                        }
+                        else
+                        {
+                            _eventLogService.LogWarning(nameof(FormNotificationEmailService), nameof(SendFormEmails), "Unable to send autoresponder as not value was provided in selected recipient email field.");
+                        }
+                    }
+                    else
+                    {
+                        _eventLogService.LogWarning(nameof(FormNotificationEmailService), nameof(SendFormEmails), "Unable to send autoresponder as recipient email field was not set to a valid option. Please review your form email configuration.");
+                    }
                 }
 
                 // Send the notification email

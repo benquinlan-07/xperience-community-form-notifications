@@ -13,6 +13,7 @@ using System.Linq;
 using XperienceCommunity.FormNotifications.Models;
 using CMS.DataEngine;
 using XperienceCommunity.FormNotifications.ValidationRules;
+using CMS.OnlineForms;
 
 [assembly: UIPage(typeof(FormBuilderTab), "emails", typeof(FormNotificationEditPage), "Emails", TemplateNames.EDIT, 210, Icon = "xp-message")]
 
@@ -43,6 +44,32 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         await base.ConfigurePage();
     }
 
+    public override async Task<EditTemplateClientProperties> ConfigureTemplateProperties(EditTemplateClientProperties properties)
+    {
+        properties = await base.ConfigureTemplateProperties(properties);
+
+        var recipientFieldDropDownOptions = properties.Items.OfType<DropDownClientProperties>().FirstOrDefault(x => x.Name == nameof(EditModel.AutoresponderRecipientEmailField));
+        if (recipientFieldDropDownOptions != null)
+            recipientFieldDropDownOptions.Options = GetRecipientFieldOptions();
+
+        return properties;
+    }
+
+    protected override async Task<ICommandResponse> SubmitInternal(FormSubmissionCommandArguments args, ICollection<IFormItem> items, IFormFieldValueProvider formFieldValueProvider)
+    {
+        var recipientFieldDropDownOptions = items.OfType<DropDownComponent>().FirstOrDefault(x => x.Name == nameof(EditModel.AutoresponderRecipientEmailField));
+        if (recipientFieldDropDownOptions != null)
+            recipientFieldDropDownOptions.Properties.Options = string.Join(Environment.NewLine, GetRecipientFieldOptions().Select(x => $"{x.Value}"));
+        return await base.SubmitInternal(args, items, formFieldValueProvider);
+    }
+
+    private DropDownOptionItem[] GetRecipientFieldOptions()
+    {
+        var bizForm = BizFormInfoProvider.ProviderObject.Get(FormId);
+        var formFields = bizForm.Form.GetFields(true, false);
+        return formFields.Select(x => new DropDownOptionItem() { Value = x.Name, Text = x.Caption }).ToArray();
+    }
+
     /// <inheritdoc />
     protected override async Task<ICommandResponse> ProcessFormData(EditModel model, ICollection<IFormItem> formItems)
     {
@@ -55,6 +82,7 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         }
 
         formNotification.FormNotificationSendEmailAutoresponder = model.AutoresponderEnabled;
+        formNotification.FormNotificationEmailAutoresponderRecipientEmailField = (model.AutoresponderEnabled ? model.AutoresponderRecipientEmailField : null) ?? string.Empty;
         formNotification.FormNotificationEmailAutoresponderSubject = (model.AutoresponderEnabled ? model.AutoresponderSubject : null) ?? string.Empty;
         formNotification.FormNotificationEmailAutoresponderTemplate = model.AutoresponderEnabled ? model.AutoresponderEmailTemplate.First().EmailGuid : Guid.Empty;
 
@@ -93,6 +121,7 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
 
         var formNotification = GetFormNotificationInfo();
         model.AutoresponderEnabled = formNotification?.FormNotificationSendEmailAutoresponder ?? false;
+        model.AutoresponderRecipientEmailField = model.AutoresponderEnabled ? formNotification?.FormNotificationEmailAutoresponderRecipientEmailField : null;
         model.AutoresponderSubject = model.AutoresponderEnabled ? formNotification?.FormNotificationEmailAutoresponderSubject : null;
         model.AutoresponderEmailTemplate = formNotification != null && model.AutoresponderEnabled
             ? new[] { new EmailRelatedItem() { EmailGuid = formNotification.FormNotificationEmailAutoresponderTemplate } }
@@ -108,14 +137,18 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         return model;
     }
 
-
     /// <summary>Represent a general properties form.</summary>
-    [FormCategory(Label = "Autoresponder", Order = 1)]
-    [FormCategory(Label = "Notification", Order = 5)]
+    [FormCategory(Label = "Autoresponder", Order = 0)]
+    [FormCategory(Label = "Notification", Order = 10)]
     public class EditModel
     {
-        [CheckBoxComponent(Label = "Send autoresponder email", Order = 2)]
+        [CheckBoxComponent(Label = "Send autoresponder email", Order = 1)]
         public bool AutoresponderEnabled { get; set; }
+
+        /// <summary>Indicates the source of autoresponder email.</summary>
+        [DropDownComponent(Label = "Recipient email field", Order = 2, ExplanationText = "Defaults to selected email subject if not specified", Options = "UserFirstName")]
+        [VisibleIfTrue(nameof(AutoresponderEnabled))]
+        public string AutoresponderRecipientEmailField { get; set; }
 
         /// <summary>Indicates the source of autoresponder email.</summary>
         [TextInputComponent(Label = "Subject", Order = 3, ExplanationText = "Defaults to selected email subject if not specified")]
@@ -128,22 +161,22 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         [VisibleIfTrue(nameof(AutoresponderEnabled))]
         public IEnumerable<EmailRelatedItem> AutoresponderEmailTemplate { get; set; }
 
-        [CheckBoxComponent(Label = "Send email notification", Order = 6)]
+        [CheckBoxComponent(Label = "Send email notification", Order = 11)]
         public bool NotificationEnabled { get; set; }
 
         /// <summary>Indicates the source of autoresponder email.</summary>
-        [TextInputComponent(Label = "Recipients", Order = 7, ExplanationText = "Additional recipients can be separated by comma or semi-colon")]
+        [TextInputComponent(Label = "Recipients", Order = 12, ExplanationText = "Additional recipients can be separated by comma or semi-colon")]
         [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Recipients")]
         [VisibleIfTrue(nameof(NotificationEnabled))]
         public string NotificationRecipient { get; set; }
 
         /// <summary>Indicates the source of autoresponder email.</summary>
-        [TextInputComponent(Label = "Subject", Order = 8, ExplanationText = "Defaults to selected email subject if not specified")]
+        [TextInputComponent(Label = "Subject", Order = 13, ExplanationText = "Defaults to selected email subject if not specified")]
         [VisibleIfTrue(nameof(NotificationEnabled))]
         public string NotificationSubject { get; set; }
 
         /// <summary>Email to be sent as autoresponder mail.</summary>
-        [EmailSelectorComponent(AllowedEmailPurpose = "FormAutoresponder", Label = "Email", MaximumEmails = 1, Order = 9)]
+        [EmailSelectorComponent(AllowedEmailPurpose = "FormAutoresponder", Label = "Email", MaximumEmails = 1, Order = 14)]
         [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Email")]
         [VisibleIfTrue(nameof(NotificationEnabled))]
         public IEnumerable<EmailRelatedItem> NotificationEmailTemplate { get; set; }
