@@ -4,7 +4,6 @@ using Kentico.Xperience.Admin.Base;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Base.Forms;
 using XperienceCommunity.FormNotifications.UI;
-using IFormItemCollectionProvider = Kentico.Xperience.Admin.Base.Forms.Internal.IFormItemCollectionProvider;
 using Kentico.Xperience.Admin.DigitalMarketing.UIPages;
 using CMS.EmailLibrary;
 using Kentico.Xperience.Admin.DigitalMarketing.FormAnnotations;
@@ -14,6 +13,8 @@ using XperienceCommunity.FormNotifications.Models;
 using CMS.DataEngine;
 using XperienceCommunity.FormNotifications.ValidationRules;
 using CMS.OnlineForms;
+using XperienceCommunity.FormNotifications.Controls;
+using IFormItemCollectionProvider = Kentico.Xperience.Admin.Base.Forms.Internal.IFormItemCollectionProvider;
 
 [assembly: UIPage(typeof(FormBuilderTab), "emails", typeof(FormNotificationEditPage), "Emails", TemplateNames.EDIT, 210, Icon = "xp-message")]
 
@@ -44,26 +45,49 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         await base.ConfigurePage();
     }
 
+    public override async Task<ICommandResponse<FormChangeResult>> Change(FormChangeCommandArguments args)
+    {
+	    var commandResponse = await base.Change(args);
+	    AssignOptionsToRecipientEmailField(commandResponse.Result.Items);
+		return commandResponse;
+    }
+
     public override async Task<EditTemplateClientProperties> ConfigureTemplateProperties(EditTemplateClientProperties properties)
     {
         properties = await base.ConfigureTemplateProperties(properties);
+        AssignOptionsToRecipientEmailField(properties.Items);
+		return properties;
+    }
 
-        var recipientFieldDropDownOptions = properties.Items.OfType<DropDownClientProperties>().FirstOrDefault(x => x.Name == nameof(EditModel.AutoresponderRecipientEmailField));
-        if (recipientFieldDropDownOptions != null)
-            recipientFieldDropDownOptions.Options = GetRecipientFieldOptions();
-
-        return properties;
+    public override async Task<ICommandResponse> Submit(FormSubmissionCommandArguments args)
+    {
+	    var commandResponse = await base.Submit(args);
+	    if (commandResponse is ICommandResponse<FormSubmissionResult> formSubmissionResultResponse)
+			AssignOptionsToRecipientEmailField(formSubmissionResultResponse.Result.Items);
+		return commandResponse;
     }
 
     protected override async Task<ICommandResponse> SubmitInternal(FormSubmissionCommandArguments args, ICollection<IFormItem> items, IFormFieldValueProvider formFieldValueProvider)
+	{
+		AssignOptionsToRecipientEmailField(items);
+		return await base.SubmitInternal(args, items, formFieldValueProvider);
+	}
+
+    private void AssignOptionsToRecipientEmailField(ICollection<IFormItem> formItems)
+	{
+		var recipientFieldDropDownOptions = formItems.OfType<DynamicOptionsDropDownComponent>().FirstOrDefault(x => x.Name == nameof(EditModel.AutoresponderRecipientEmailField));
+		if (recipientFieldDropDownOptions != null)
+			recipientFieldDropDownOptions.Properties.Options = string.Join(Environment.NewLine, GetRecipientFieldOptions().Select(x => $"{x.Value}"));
+	}
+
+    private void AssignOptionsToRecipientEmailField(ICollection<IFormItemClientProperties> clientProperties)
     {
-        var recipientFieldDropDownOptions = items.OfType<DropDownComponent>().FirstOrDefault(x => x.Name == nameof(EditModel.AutoresponderRecipientEmailField));
-        if (recipientFieldDropDownOptions != null)
-            recipientFieldDropDownOptions.Properties.Options = string.Join(Environment.NewLine, GetRecipientFieldOptions().Select(x => $"{x.Value}"));
-        return await base.SubmitInternal(args, items, formFieldValueProvider);
+	    var recipientFieldDropDownOptions = clientProperties.OfType<DropDownClientProperties>().FirstOrDefault(x => x.Name == nameof(EditModel.AutoresponderRecipientEmailField));
+	    if (recipientFieldDropDownOptions != null)
+		    recipientFieldDropDownOptions.Options = GetRecipientFieldOptions();
     }
 
-    private DropDownOptionItem[] GetRecipientFieldOptions()
+	private DropDownOptionItem[] GetRecipientFieldOptions()
     {
         var bizForm = BizFormInfoProvider.ProviderObject.Get(FormId);
         var formFields = bizForm.Form.GetFields(true, false);
@@ -99,6 +123,8 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
             // Returns the submitted field values to the client (repopulates the form)
             Items = await formItems.OnlyVisible().GetClientProperties(),
         });
+
+        response.AddSuccessMessage("Email notification settings have been saved.");
 
         return response;
     }
@@ -146,7 +172,8 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         public bool AutoresponderEnabled { get; set; }
 
         /// <summary>Indicates the source of autoresponder email.</summary>
-        [DropDownComponent(Label = "Recipient email field", Order = 2, ExplanationText = "Defaults to selected email subject if not specified", Options = "UserFirstName")]
+        [DynamicOptionsDropDownComponent(Label = "Recipient email field", Order = 2, ExplanationText = "Please select the field on the form that represents the recipients email")]
+        [RequiredIfTrueValidationRule(nameof(AutoresponderEnabled), FieldName = "Recipient email field")]
         [VisibleIfTrue(nameof(AutoresponderEnabled))]
         public string AutoresponderRecipientEmailField { get; set; }
 
