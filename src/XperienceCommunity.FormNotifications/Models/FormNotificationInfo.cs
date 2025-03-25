@@ -177,17 +177,6 @@ public partial class FormNotificationInfo : AbstractInfo<FormNotificationInfo, I
 
 
     /// <summary>
-    /// Constructor for de-serialization.
-    /// </summary>
-    /// <param name="info">Serialization info.</param>
-    /// <param name="context">Streaming context.</param>
-    protected FormNotificationInfo(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-    }
-
-
-    /// <summary>
     /// Creates an empty instance of the <see cref="FormNotificationInfo"/> class.
     /// </summary>
     public FormNotificationInfo()

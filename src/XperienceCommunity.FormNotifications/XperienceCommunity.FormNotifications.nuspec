@@ -10,12 +10,12 @@
 		<readme>docs\README.md</readme>
 		<license type="file">licenses\LICENSE.md</license>
 		<dependencies>
-			<dependency id="kentico.xperience.admin" version="29.6.0" />
+			<dependency id="kentico.xperience.admin" version="30.0.0" />
 		</dependencies>
 	</metadata>
     <files>
         <file src="..\..\README.md" target="docs\" />
         <file src="..\..\LICENSE.md" target="licenses\" />
-        <file src="bin\Release\net6.0\XperienceCommunity.FormNotifications.dll" target="lib\net6.0" />
+        <file src="bin\Release\net8.0\XperienceCommunity.FormNotifications.dll" target="lib\net8.0" />
     </files>
 </package>

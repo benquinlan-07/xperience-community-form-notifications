@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CMS.ContactManagement;
 using CMS.ContentEngine.Internal;
 using CMS.Core;
 using CMS.DataEngine;
@@ -86,6 +85,9 @@ namespace XperienceCommunity.FormNotifications.Services
                     macroResolver.SetNamedSourceData($"value_{propertyName}", value);
                     macroResolver.SetNamedSourceData(propertyName, value);
                 }
+
+                // Add the form to the resolver
+                macroResolver.SetNamedSourceData("BizForm", bizFormItem.BizFormInfo);
 
                 // Send the autoresponder email
                 if (formNotification.FormNotificationSendEmailAutoresponder)

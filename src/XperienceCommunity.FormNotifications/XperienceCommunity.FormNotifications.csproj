@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<AdminOrgName>xperiencecommunity-formnotifications</AdminOrgName>
 	</PropertyGroup>
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="kentico.xperience.admin" Version="29.6.0" />
+		<PackageReference Include="kentico.xperience.admin" Version="30.0.0" />
 	</ItemGroup>
 </Project>
