@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using CMS.ContentEngine.Internal;
 using CMS.Core;
@@ -24,10 +25,9 @@ namespace XperienceCommunity.FormNotifications.Services
     {
         private readonly IEventLogService _eventLogService;
         private readonly IEmailService _emailService;
-        private readonly IEmailTemplateMergeService _emailTemplateMergeService;
-        private readonly IEmailContentResolver _emailContentResolver;
         private readonly IContentItemDataInfoRetriever _contentItemDataInfoRetriever;
         private readonly IEmailChannelLanguageRetriever _emailChannelLanguageRetriever;
+        private readonly IEmailMarkupBuilderFactory _emailMarkupBuilderFactory;
         private readonly IInfoProvider<EmailConfigurationInfo> _emailConfigurationInfoProvider;
         private readonly IInfoProvider<FormNotificationInfo> _formNotificationInfoProvider;
         private readonly IInfoProvider<ContentItemInfo> _contentItemInfoProvider;
@@ -36,10 +36,9 @@ namespace XperienceCommunity.FormNotifications.Services
 
         public FormNotificationEmailService(IEventLogService eventLogService, 
             IEmailService emailService,
-            IEmailTemplateMergeService emailTemplateMergeService,
-            IEmailContentResolver emailContentResolver,
             IContentItemDataInfoRetriever contentItemDataInfoRetriever,
             IEmailChannelLanguageRetriever emailChannelLanguageRetriever,
+            IEmailMarkupBuilderFactory emailMarkupBuilderFactory,
             IInfoProvider<EmailConfigurationInfo> emailConfigurationInfoProvider,
             IInfoProvider<FormNotificationInfo> formNotificationInfoProvider,
             IInfoProvider<ContentItemInfo> contentItemInfoProvider,
@@ -48,10 +47,9 @@ namespace XperienceCommunity.FormNotifications.Services
         {
             _eventLogService = eventLogService;
             _emailService = emailService;
-            _emailTemplateMergeService = emailTemplateMergeService;
-            _emailContentResolver = emailContentResolver;
             _contentItemDataInfoRetriever = contentItemDataInfoRetriever;
             _emailChannelLanguageRetriever = emailChannelLanguageRetriever;
+            _emailMarkupBuilderFactory = emailMarkupBuilderFactory;
             _emailConfigurationInfoProvider = emailConfigurationInfoProvider;
             _formNotificationInfoProvider = formNotificationInfoProvider;
             _contentItemInfoProvider = contentItemInfoProvider;
@@ -141,9 +139,10 @@ namespace XperienceCommunity.FormNotifications.Services
             var senderMailAddress = await GetSenderMailAddress(emailValues);
 
             // Process macros in the email body, recipients and subject
-            var templateWithEmailData = await _emailTemplateMergeService.GetMergedTemplateWithEmailData(emailConfiguration, false);
-            var bodyContent = ResolveMacros(macroResolver, templateWithEmailData);
-            bodyContent = await _emailContentResolver.Resolve(emailConfiguration, bodyContent, EmailContentFilterType.Sending, dataContext);
+            var emailMarkupBuilder = await _emailMarkupBuilderFactory.Create(emailConfiguration);
+            var emailMarkupBuilderContext = new RecipientEmailMarkupBuilderContext();
+            var emailSourceCode = await emailMarkupBuilder.BuildEmailForSending(emailConfiguration, emailMarkupBuilderContext, CancellationToken.None);
+            var bodyContent = ResolveMacros(macroResolver, emailSourceCode);
 
             var recipients = ResolveMacros(macroResolver, recipient).Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
 
