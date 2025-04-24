@@ -88,7 +88,7 @@ namespace XperienceCommunity.FormNotifications.Services
                 macroResolver.SetNamedSourceData("BizForm", bizFormItem.BizFormInfo);
 
                 // Send the autoresponder email
-                if (formNotification.FormNotificationSendEmailAutoresponder)
+                if (formNotification.FormNotificationSendEmailAutoresponder && !string.IsNullOrWhiteSpace(formNotification.FormNotificationEmailAutoresponderRecipientEmailField))
                 {
                     var emailFormField = bizFormItem.BizFormInfo.Form.GetFormField(formNotification.FormNotificationEmailAutoresponderRecipientEmailField);
                     if (emailFormField != null)
