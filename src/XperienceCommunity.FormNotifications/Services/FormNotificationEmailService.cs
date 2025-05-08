@@ -144,6 +144,9 @@ namespace XperienceCommunity.FormNotifications.Services
             var emailSourceCode = await emailMarkupBuilder.BuildEmailForSending(emailConfiguration, emailMarkupBuilderContext, CancellationToken.None);
             var bodyContent = ResolveMacros(macroResolver, emailSourceCode);
 
+            foreach (IEmailContentFilter emailContentFilter in EmailContentFilterRegister.Instance.GetAll(EmailContentFilterType.Sending))
+                bodyContent = await emailContentFilter.Apply(bodyContent, emailConfiguration, dataContext);
+
             var recipients = ResolveMacros(macroResolver, recipient).Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
 
             subject = ResolveMacros(macroResolver, string.IsNullOrWhiteSpace(subject) ? emailValues.EmailSubject : subject);
