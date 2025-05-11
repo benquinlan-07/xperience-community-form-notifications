@@ -109,11 +109,13 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         formNotification.FormNotificationEmailAutoresponderRecipientEmailField = (model.AutoresponderEnabled ? model.AutoresponderRecipientEmailField : null) ?? string.Empty;
         formNotification.FormNotificationEmailAutoresponderSubject = (model.AutoresponderEnabled ? model.AutoresponderSubject : null) ?? string.Empty;
         formNotification.FormNotificationEmailAutoresponderTemplate = model.AutoresponderEnabled ? model.AutoresponderEmailTemplate.First().EmailGuid : Guid.Empty;
+        formNotification.FormNotificationEmailAutoresponderIncludeAttachments = model.AutoresponderEnabled && model.AutoresponderIncludeAttachments;
 
         formNotification.FormNotificationSendEmailNotification = model.NotificationEnabled;
         formNotification.FormNotificationEmailNotificationRecipient = (model.NotificationEnabled ? model.NotificationRecipient : null) ?? string.Empty;
         formNotification.FormNotificationEmailNotificationSubject = (model.NotificationEnabled ? model.NotificationSubject : null) ?? string.Empty;
         formNotification.FormNotificationEmailNotificationTemplate = model.NotificationEnabled ? model.NotificationEmailTemplate.First().EmailGuid : Guid.Empty;
+        formNotification.FormNotificationEmailNotificationIncludeAttachments = model.NotificationEnabled && model.NotificationIncludeAttachments;
 
         _formNotificationInfoProvider.Set(formNotification);
 
@@ -152,6 +154,7 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         model.AutoresponderEmailTemplate = formNotification != null && model.AutoresponderEnabled
             ? new[] { new EmailRelatedItem() { EmailGuid = formNotification.FormNotificationEmailAutoresponderTemplate } }
             : Array.Empty<EmailRelatedItem>();
+        model.AutoresponderIncludeAttachments = model.AutoresponderEnabled && (formNotification?.FormNotificationEmailAutoresponderIncludeAttachments ?? false);
 
         model.NotificationEnabled = formNotification?.FormNotificationSendEmailNotification ?? false;
         model.NotificationRecipient = model.NotificationEnabled ? formNotification?.FormNotificationEmailNotificationRecipient : null;
@@ -159,6 +162,7 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         model.NotificationEmailTemplate = formNotification != null && model.NotificationEnabled
             ? new[] { new EmailRelatedItem() { EmailGuid = formNotification.FormNotificationEmailNotificationTemplate } }
             : Array.Empty<EmailRelatedItem>();
+        model.NotificationIncludeAttachments = model.NotificationEnabled && (formNotification?.FormNotificationEmailNotificationIncludeAttachments ?? false);
 
         return model;
     }
@@ -188,6 +192,10 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         [VisibleIfTrue(nameof(AutoresponderEnabled))]
         public IEnumerable<EmailRelatedItem> AutoresponderEmailTemplate { get; set; }
 
+        [CheckBoxComponent(Label = "Include attachments", Order = 5)]
+        [VisibleIfTrue(nameof(AutoresponderEnabled))]
+        public bool AutoresponderIncludeAttachments { get; set; }
+
         [CheckBoxComponent(Label = "Send email notification", Order = 11)]
         public bool NotificationEnabled { get; set; }
 
@@ -207,6 +215,10 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Email")]
         [VisibleIfTrue(nameof(NotificationEnabled))]
         public IEnumerable<EmailRelatedItem> NotificationEmailTemplate { get; set; }
+
+        [CheckBoxComponent(Label = "Include attachments", Order = 15)]
+        [VisibleIfTrue(nameof(NotificationEnabled))]
+        public bool NotificationIncludeAttachments { get; set; }
 
     }
 }

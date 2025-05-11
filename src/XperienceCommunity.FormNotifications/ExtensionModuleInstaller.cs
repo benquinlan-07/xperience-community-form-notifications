@@ -123,6 +123,16 @@ internal class ExtensionModuleInstaller
 
         formItem = new FormFieldInfo
         {
+            Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationIncludeAttachments),
+            AllowEmpty = false,
+            Visible = true,
+            Precision = 0,
+            DataType = "boolean"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
             Name = nameof(FormNotificationInfo.FormNotificationSendEmailAutoresponder),
             AllowEmpty = false,
             Visible = true,
@@ -148,6 +158,16 @@ internal class ExtensionModuleInstaller
             Visible = true,
             Precision = 0,
             DataType = "guid",
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormNotificationInfo.FormNotificationEmailAutoresponderIncludeAttachments),
+            AllowEmpty = false,
+            Visible = true,
+            Precision = 0,
+            DataType = "boolean"
         };
         formInfo.AddFormItem(formItem);
 

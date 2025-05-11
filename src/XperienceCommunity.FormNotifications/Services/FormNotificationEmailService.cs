@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
@@ -11,8 +12,11 @@ using CMS.EmailEngine;
 using CMS.EmailLibrary;
 using CMS.EmailLibrary.Internal;
 using CMS.EmailMarketing.Internal;
+using CMS.FormEngine;
+using CMS.IO;
 using CMS.MacroEngine;
 using CMS.OnlineForms;
+using XperienceCommunity.FormNotifications.Extensions;
 using XperienceCommunity.FormNotifications.Models;
 
 namespace XperienceCommunity.FormNotifications.Services
@@ -87,6 +91,23 @@ namespace XperienceCommunity.FormNotifications.Services
                 // Add the form to the resolver
                 macroResolver.SetNamedSourceData("BizForm", bizFormItem.BizFormInfo);
 
+                var bizformAttachments = new List<BizFormUploadFile>();
+                if (formNotification.FormNotificationEmailNotificationIncludeAttachments || formNotification.FormNotificationEmailAutoresponderIncludeAttachments)
+                {
+                    var fileUploadFields = bizFormItem.BizFormInfo.Form.ItemsList
+                        .OfType<FormFieldInfo>()
+                        .Where(x => x.IsFileUpload())
+                        .ToArray();
+
+                    foreach (var fileUploadField in fileUploadFields)
+                    {
+                        var formValue = bizFormItem[fileUploadField.Name] as BizFormUploadFile;
+                        if (string.IsNullOrWhiteSpace(formValue?.SystemFileName))
+                            continue;
+                        bizformAttachments.Add(formValue);
+                    }
+                }
+
                 // Send the autoresponder email
                 if (formNotification.FormNotificationSendEmailAutoresponder && !string.IsNullOrWhiteSpace(formNotification.FormNotificationEmailAutoresponderRecipientEmailField))
                 {
@@ -98,7 +119,10 @@ namespace XperienceCommunity.FormNotifications.Services
                         {
                             var recipient = new Recipient { Email = recipientEmail };
                             var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient };
-                            await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver);
+                            var attachments = formNotification.FormNotificationEmailAutoresponderIncludeAttachments
+                                ? bizformAttachments
+                                : null;
+                            await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver, attachments);
                         }
                         else
                         {
@@ -116,7 +140,10 @@ namespace XperienceCommunity.FormNotifications.Services
                 {
                     var recipient = new Recipient { Email = formNotification.FormNotificationEmailNotificationRecipient };
                     var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient };
-                    await SendEmail(formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver);
+                    var attachments = formNotification.FormNotificationEmailNotificationIncludeAttachments
+                        ? bizformAttachments
+                        : null;
+                    await SendEmail(formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver, attachments);
                 }
             }
             catch (Exception ex)
@@ -125,7 +152,7 @@ namespace XperienceCommunity.FormNotifications.Services
             }
         }
 
-        private async Task SendEmail(Guid emailConfigurationGuid, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver)
+        private async Task SendEmail(Guid emailConfigurationGuid, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments)
         {
             var emailConfiguration = await _emailConfigurationInfoProvider.GetAsync(emailConfigurationGuid);
             if (emailConfiguration == null)
@@ -151,7 +178,7 @@ namespace XperienceCommunity.FormNotifications.Services
 
             subject = ResolveMacros(macroResolver, string.IsNullOrWhiteSpace(subject) ? emailValues.EmailSubject : subject);
 
-            // Send the email
+            // Build the email message
             var toSend = new EmailMessage
             {
                 Recipients = string.Join(";", recipients),
@@ -161,6 +188,19 @@ namespace XperienceCommunity.FormNotifications.Services
                 EmailConfigurationID = emailConfiguration.EmailConfigurationID,
                 MailoutGuid = Guid.NewGuid(),
             };
+
+            // Include any attachments
+            if (attachments != null)
+            {
+                foreach (var bizFormUploadFile in attachments)
+                {
+                    var filePath = FormHelper.GetFilePhysicalPath(bizFormUploadFile.SystemFileName);
+                    var reader = File.OpenRead(filePath);
+                    toSend.Attachments.Add(new Attachment(reader, bizFormUploadFile.OriginalFileName));
+                }
+            }
+
+            // Send email
             await _emailService.SendEmail(toSend);
         }
 

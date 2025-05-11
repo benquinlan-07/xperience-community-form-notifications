@@ -115,6 +115,17 @@ public partial class FormNotificationInfo : AbstractInfo<FormNotificationInfo, I
 
 
     /// <summary>
+    /// Form notification include attachments.
+    /// </summary>
+    [DatabaseField]
+    public virtual bool FormNotificationEmailNotificationIncludeAttachments
+    {
+        get => ValidationHelper.GetBoolean(GetValue(nameof(FormNotificationEmailNotificationIncludeAttachments)), default);
+        set => SetValue(nameof(FormNotificationEmailNotificationIncludeAttachments), value);
+    }
+
+
+    /// <summary>
     /// Form notification redirect method.
     /// </summary>
     [DatabaseField]
@@ -155,6 +166,17 @@ public partial class FormNotificationInfo : AbstractInfo<FormNotificationInfo, I
     {
         get => ValidationHelper.GetGuid(GetValue(nameof(FormNotificationEmailAutoresponderTemplate)), default);
         set => SetValue(nameof(FormNotificationEmailAutoresponderTemplate), value);
+    }
+
+
+    /// <summary>
+    /// Form notification include attachments.
+    /// </summary>
+    [DatabaseField]
+    public virtual bool FormNotificationEmailAutoresponderIncludeAttachments
+    {
+        get => ValidationHelper.GetBoolean(GetValue(nameof(FormNotificationEmailAutoresponderIncludeAttachments)), default);
+        set => SetValue(nameof(FormNotificationEmailAutoresponderIncludeAttachments), value);
     }
 
 
