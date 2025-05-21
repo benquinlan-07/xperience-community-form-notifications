@@ -1,21 +1,12 @@
-﻿using CMS.Automation;
-using CMS.Base;
-using CMS.ContactManagement;
+﻿using CMS.Base;
 using CMS.Core;
-using CMS.EmailEngine;
-using CMS.EmailLibrary.Internal;
-using CMS.EmailLibrary;
-using CMS.EmailMarketing.Internal;
 using CMS.OnlineForms;
 using Kentico.Xperience.Admin.Base;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System;
-using System.Threading.Tasks;
 using CMS.DataEngine;
 using Microsoft.Extensions.DependencyInjection;
 using XperienceCommunity.FormNotifications;
-using XperienceCommunity.FormNotifications.Services;
+using XperienceCommunity.FormNotifications.EventHandlers;
 
 [assembly: CMS.AssemblyDiscoverable]
 [assembly: CMS.RegisterModule(typeof(ExtensionAdminModule))]
@@ -40,20 +31,17 @@ internal class ExtensionAdminModule : AdminModule
         _installer = services.GetRequiredService<ExtensionModuleInstaller>();
 
         ApplicationEvents.Initialized.Execute += InitializeModule;
+    }
 
-        BizFormItemEvents.Insert.After += OnAfterInsertBizFormItem;
+    // OnPreInit allows you to access IServiceCollection via ModulePreInitParameters
+    protected override void OnPreInit(ModulePreInitParameters parameters)
+    {
+        base.OnPreInit(parameters);
+
+        // Registers an object event handler
+        parameters.Services.AddInfoObjectEventHandler<InfoObjectAfterInsertEvent<BizFormItem>, BizFormItemAfterInsertHandler>();
     }
 
     private void InitializeModule(object? sender, EventArgs e) =>
         _installer?.Install();
-
-    private void OnAfterInsertBizFormItem(object sender, BizFormItemEventArgs e)
-    {
-        var emailTask = Task.Run(async () =>
-        {
-            var formNotificationEmailService = Service.Resolve<IFormNotificationEmailService>();
-            await formNotificationEmailService.SendFormEmails(e.Item);
-        });
-        emailTask.Wait();
-    }
 }
