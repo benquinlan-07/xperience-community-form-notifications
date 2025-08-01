@@ -167,8 +167,7 @@ namespace XperienceCommunity.FormNotifications.Services
 
             // Process macros in the email body, recipients and subject
             var emailMarkupBuilder = await _emailMarkupBuilderFactory.Create(emailConfiguration);
-            var emailMarkupBuilderContext = new RecipientEmailMarkupBuilderContext();
-            var emailSourceCode = await emailMarkupBuilder.BuildEmailForSending(emailConfiguration, emailMarkupBuilderContext, CancellationToken.None);
+            var emailSourceCode = await emailMarkupBuilder.BuildEmailForSending(emailConfiguration);
             var bodyContent = ResolveMacros(macroResolver, emailSourceCode);
 
             foreach (IEmailContentFilter emailContentFilter in EmailContentFilterRegister.Instance.GetAll(EmailContentFilterType.Sending))

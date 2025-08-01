@@ -7,6 +7,27 @@
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="kentico.xperience.admin" Version="30.5.0" />
+		<PackageReference Include="kentico.xperience.admin" Version="30.8.0" />
+	</ItemGroup>
+	<PropertyGroup>
+		<Title>Xperience by Kentico Form Notifications</Title>
+		<PackageId>XperienceCommunity.FormNotifications</PackageId>
+		<Version>0.0.0</Version>
+		<Authors>Ben Quinlan</Authors>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>kentico xperience mvc core forms emails</PackageTags>
+		<Description>
+			Extension for Xperience by Kentico to allow for easy configuration of emails for sending autoresponders and notifications within the forms application.
+		</Description>
+		<RepositoryUrl>https://github.com/benquinlan-07/xperience-community-form-notifications</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageReadmeFile>docs\README.md</PackageReadmeFile>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\..\icon.png" Pack="true" PackagePath="" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="docs\" />
+		<None Include="..\..\LICENSE.md" Pack="true" PackagePath="licenses\" />
 	</ItemGroup>
 </Project>

@@ -25,6 +25,8 @@ internal class CustomEmailDataContext : IEmailDataContext
     /// <inheritdoc />
     public string Resolve(string parameterName) => this.Recipient?.Resolve(parameterName);
 
+    public bool ShouldBeHtmlEncoded(string parameterName) => false;
+
     /// <inheritdoc />
     public List<EmailDynamicTextPattern> GetAvailableMacros()
     {
