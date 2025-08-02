@@ -10,16 +10,9 @@ One particular feature of note within this extension is that it has been extende
 
 ## Requirements
 
-### Library Version Matrix
-
-| Xperience Version | Library Version |
-| ----------------- | --------------- |
-| >= 29.6.0         | 1.1.0           |
-| 29.5.3            | 1.0.0           |
-
 ### Dependencies
 
-- [ASP.NET Core 6.0](https://dotnet.microsoft.com/en-us/download)
+- [ASP.NET Core 8.0](https://dotnet.microsoft.com/en-us/download)
 - [Xperience by Kentico](https://docs.kentico.com)
 
 ## Package Installation
@@ -60,7 +53,6 @@ Install-Package XperienceCommunity.FormNotifications
 
 1. Select the Emails option from the menu on the right side of the screen.
 ![Xperience by Kentico Form Notifications](https://raw.githubusercontent.com/benquinlan-07/xperience-community-form-notifications/refs/heads/main/images/form-notifications.jpeg)
-
 
 1. Configure your preferred notification settings.
 
