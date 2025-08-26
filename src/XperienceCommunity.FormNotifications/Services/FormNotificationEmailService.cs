@@ -206,7 +206,7 @@ namespace XperienceCommunity.FormNotifications.Services
         private string ResolveMacros(MacroResolver macroResolver, string content)
         {
             // Include support for anyone copying form placeholders from previous environments by changing $$label:FieldName$$ and $$value:FieldName$$ to {% label_FieldName %} and {% value_FieldName %}
-            var oldFormatRegex = new Regex("\\$\\$(value|label):([a-zA-Z_][a-zA-Z0-9_]+)\\$\\$");
+            var oldFormatRegex = new Regex("\\$\\$(value|label):([a-zA-Z_]+[a-zA-Z0-9_]*)\\$\\$");
             content = oldFormatRegex.Replace(content ?? "", "{% $1_$2 %}");
             return macroResolver.ResolveMacros(content ?? "", null);
         }
