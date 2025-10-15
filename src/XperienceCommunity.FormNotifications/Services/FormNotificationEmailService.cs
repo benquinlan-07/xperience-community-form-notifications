@@ -37,6 +37,7 @@ namespace XperienceCommunity.FormNotifications.Services
         private readonly IInfoProvider<ContentItemInfo> _contentItemInfoProvider;
         private readonly IInfoProvider<EmailChannelSenderInfo> _emailChannelSenderInfoProvider;
         private readonly IInfoProvider<EmailChannelInfo> _emailChannelInfoProvider;
+        private readonly IEnumerable<IFormNotificationEmailMessageHandler> _emailMessageHandlers;
 
         public FormNotificationEmailService(IEventLogService eventLogService, 
             IEmailService emailService,
@@ -47,7 +48,8 @@ namespace XperienceCommunity.FormNotifications.Services
             IInfoProvider<FormNotificationInfo> formNotificationInfoProvider,
             IInfoProvider<ContentItemInfo> contentItemInfoProvider,
             IInfoProvider<EmailChannelSenderInfo> emailChannelSenderInfoProvider,
-            IInfoProvider<EmailChannelInfo> emailChannelInfoProvider)
+            IInfoProvider<EmailChannelInfo> emailChannelInfoProvider,
+            IEnumerable<IFormNotificationEmailMessageHandler> emailMessageHandlers)
         {
             _eventLogService = eventLogService;
             _emailService = emailService;
@@ -59,6 +61,7 @@ namespace XperienceCommunity.FormNotifications.Services
             _contentItemInfoProvider = contentItemInfoProvider;
             _emailChannelSenderInfoProvider = emailChannelSenderInfoProvider;
             _emailChannelInfoProvider = emailChannelInfoProvider;
+            _emailMessageHandlers = emailMessageHandlers;
         }
 
         public async Task SendFormEmails(BizFormItem bizFormItem)
@@ -122,7 +125,7 @@ namespace XperienceCommunity.FormNotifications.Services
                             var attachments = formNotification.FormNotificationEmailAutoresponderIncludeAttachments
                                 ? bizformAttachments
                                 : null;
-                            await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver, attachments);
+                            await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver, attachments, bizFormItem, true);
                         }
                         else
                         {
@@ -143,7 +146,7 @@ namespace XperienceCommunity.FormNotifications.Services
                     var attachments = formNotification.FormNotificationEmailNotificationIncludeAttachments
                         ? bizformAttachments
                         : null;
-                    await SendEmail(formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver, attachments);
+                    await SendEmail(formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver, attachments, bizFormItem, false);
                 }
             }
             catch (Exception ex)
@@ -152,7 +155,7 @@ namespace XperienceCommunity.FormNotifications.Services
             }
         }
 
-        private async Task SendEmail(Guid emailConfigurationGuid, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments)
+        private async Task SendEmail(Guid emailConfigurationGuid, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments, BizFormItem bizFormItem, bool isAutoresponder)
         {
             var emailConfiguration = await _emailConfigurationInfoProvider.GetAsync(emailConfigurationGuid);
             if (emailConfiguration == null)
@@ -196,6 +199,15 @@ namespace XperienceCommunity.FormNotifications.Services
                     var filePath = FormHelper.GetFilePhysicalPath(bizFormUploadFile.SystemFileName);
                     var reader = File.OpenRead(filePath);
                     toSend.Attachments.Add(new Attachment(reader, bizFormUploadFile.OriginalFileName));
+                }
+            }
+
+            // Apply custom transformations via registered handlers
+            if (_emailMessageHandlers != null)
+            {
+                foreach (var handler in _emailMessageHandlers)
+                {
+                    toSend = await handler.TransformEmailMessageAsync(toSend, bizFormItem, isAutoresponder);
                 }
             }
 

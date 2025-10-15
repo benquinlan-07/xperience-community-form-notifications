@@ -59,3 +59,52 @@ Install-Package XperienceCommunity.FormNotifications
 1. Submit the form.
 
 1. Watch the magic happen.
+## Advanced Features
+
+### Custom Email Message Transformation
+
+You can create custom handlers to transform email messages before they are sent. This allows you to modify recipients, subject, body, headers, or add custom logic based on form data.
+
+1. Create a class that implements `IFormNotificationEmailMessageHandler`:
+
+```csharp
+using System.Threading.Tasks;
+using CMS.EmailLibrary;
+using CMS.OnlineForms;
+using XperienceCommunity.FormNotifications.Services;
+
+public class CustomEmailMessageHandler : IFormNotificationEmailMessageHandler
+{
+    public Task<EmailMessage> TransformEmailMessageAsync(
+        EmailMessage emailMessage, 
+        BizFormItem bizFormItem, 
+        bool isAutoresponder)
+    {
+        // Add a prefix to the subject
+        emailMessage.Subject = $"[{bizFormItem.BizFormInfo.FormDisplayName}] {emailMessage.Subject}";
+        
+        // Add BCC recipients
+        emailMessage.BCC = "archive@company.com";
+        
+        // Add custom logic based on form type
+        if (isAutoresponder)
+        {
+            // Custom logic for autoresponders
+        }
+        else
+        {
+            // Custom logic for notifications
+        }
+        
+        return Task.FromResult(emailMessage);
+    }
+}
+```
+
+2. Register your handler in `Program.cs`:
+
+```csharp
+builder.Services.AddTransient<IFormNotificationEmailMessageHandler, CustomEmailMessageHandler>();
+```
+
+Multiple handlers can be registered and they will be executed in the order they are registered.
