@@ -125,7 +125,7 @@ namespace XperienceCommunity.FormNotifications.Services
                             var attachments = formNotification.FormNotificationEmailAutoresponderIncludeAttachments
                                 ? bizformAttachments
                                 : null;
-                            await SendEmail(formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver, attachments, bizFormItem, true);
+                            await SendEmail(formNotification, formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver, attachments, bizFormItem, true);
                         }
                         else
                         {
@@ -146,7 +146,7 @@ namespace XperienceCommunity.FormNotifications.Services
                     var attachments = formNotification.FormNotificationEmailNotificationIncludeAttachments
                         ? bizformAttachments
                         : null;
-                    await SendEmail(formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver, attachments, bizFormItem, false);
+                    await SendEmail(formNotification, formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver, attachments, bizFormItem, false);
                 }
             }
             catch (Exception ex)
@@ -155,7 +155,7 @@ namespace XperienceCommunity.FormNotifications.Services
             }
         }
 
-        private async Task SendEmail(Guid emailConfigurationGuid, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments, BizFormItem bizFormItem, bool isAutoresponder)
+        private async Task SendEmail(FormNotificationInfo formNotification, Guid emailConfigurationGuid, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments, BizFormItem bizFormItem, bool isAutoresponder)
         {
             var emailConfiguration = await _emailConfigurationInfoProvider.GetAsync(emailConfigurationGuid);
             if (emailConfiguration == null)
@@ -207,7 +207,7 @@ namespace XperienceCommunity.FormNotifications.Services
             {
                 foreach (var handler in _emailMessageHandlers)
                 {
-                    toSend = await handler.TransformEmailMessageAsync(toSend, bizFormItem, isAutoresponder);
+                    toSend = await handler.TransformEmailMessageAsync(toSend, formNotification, emailConfiguration, bizFormItem, isAutoresponder);
                 }
             }
 
