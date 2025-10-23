@@ -21,6 +21,7 @@ internal class ExtensionModuleInstaller
 
         InitializeResource(resource);
         InstallFormNotificationInfo(resource);
+        InstallFormEmailTemplateInfo(resource);
     }
 
     public ResourceInfo InitializeResource(ResourceInfo resource)
@@ -123,6 +124,25 @@ internal class ExtensionModuleInstaller
 
         formItem = new FormFieldInfo
         {
+            Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationEmailTemplate),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationEmailMessage),
+            AllowEmpty = true,
+            Visible = true,
+            DataType = "longtext"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
             Name = nameof(FormNotificationInfo.FormNotificationEmailNotificationIncludeAttachments),
             AllowEmpty = false,
             Visible = true,
@@ -163,11 +183,110 @@ internal class ExtensionModuleInstaller
 
         formItem = new FormFieldInfo
         {
+            Name = nameof(FormNotificationInfo.FormNotificationEmailAutoresponderEmailTemplate),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormNotificationInfo.FormNotificationEmailAutoresponderEmailMessage),
+            AllowEmpty = true,
+            Visible = true,
+            DataType = "longtext"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
             Name = nameof(FormNotificationInfo.FormNotificationEmailAutoresponderIncludeAttachments),
             AllowEmpty = false,
             Visible = true,
             Precision = 0,
             DataType = "boolean"
+        };
+        formInfo.AddFormItem(formItem);
+
+        SetFormDefinition(info, formInfo);
+
+        if (info.HasChanged)
+        {
+            DataClassInfoProvider.SetDataClassInfo(info);
+        }
+    }
+
+    public void InstallFormEmailTemplateInfo(ResourceInfo resource)
+    {
+        var info = DataClassInfoProvider.GetDataClassInfo(FormEmailTemplateInfo.OBJECT_TYPE) ?? DataClassInfo.New(FormEmailTemplateInfo.OBJECT_TYPE);
+
+        info.ClassName = FormEmailTemplateInfo.TYPEINFO.ObjectClassName;
+        info.ClassTableName = FormEmailTemplateInfo.TYPEINFO.ObjectClassName.Replace(".", "_");
+        info.ClassDisplayName = FormEmailTemplateInfo.OBJECT_CLASS_DISPLAYNAME;
+        info.ClassType = ClassType.OTHER;
+        info.ClassResourceID = resource.ResourceID;
+
+        var formInfo = FormHelper.GetBasicFormDefinition(nameof(FormEmailTemplateInfo.FormEmailTemplateId));
+
+        var formItem = new FormFieldInfo
+        {
+            Name = nameof(FormEmailTemplateInfo.FormEmailTemplateGuid),
+            AllowEmpty = false,
+            Visible = true,
+            Precision = 0,
+            DataType = "guid",
+            Enabled = true,
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormEmailTemplateInfo.FormEmailTemplateName),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormEmailTemplateInfo.FormEmailTemplateDisplayName),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormEmailTemplateInfo.FormEmailTemplateSender),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormEmailTemplateInfo.FormEmailTemplateSubject),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(FormEmailTemplateInfo.FormEmailTemplateSourceCode),
+            AllowEmpty = true,
+            Visible = true,
+            DataType = "longtext"
         };
         formInfo.AddFormItem(formItem);
 

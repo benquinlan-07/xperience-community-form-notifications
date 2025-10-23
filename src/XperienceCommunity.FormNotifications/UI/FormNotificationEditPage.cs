@@ -1,19 +1,22 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using CMS.Core;
+using CMS.DataEngine;
+using CMS.EmailLibrary;
+using CMS.OnlineForms;
 using Kentico.Xperience.Admin.Base;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Base.Forms;
-using XperienceCommunity.FormNotifications.UI;
-using Kentico.Xperience.Admin.DigitalMarketing.UIPages;
-using CMS.EmailLibrary;
 using Kentico.Xperience.Admin.DigitalMarketing.FormAnnotations;
+using Kentico.Xperience.Admin.DigitalMarketing.UIPages;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using XperienceCommunity.FormNotifications.Models;
-using CMS.DataEngine;
-using XperienceCommunity.FormNotifications.ValidationRules;
-using CMS.OnlineForms;
+using System.Threading.Tasks;
 using XperienceCommunity.FormNotifications.Controls;
+using XperienceCommunity.FormNotifications.Models;
+using XperienceCommunity.FormNotifications.UI;
+using XperienceCommunity.FormNotifications.ValidationRules;
+using static System.Net.Mime.MediaTypeNames;
 using IFormItemCollectionProvider = Kentico.Xperience.Admin.Base.Forms.Internal.IFormItemCollectionProvider;
 
 [assembly: UIPage(typeof(FormBuilderTab), "emails", typeof(FormNotificationEditPage), "Emails", TemplateNames.EDIT, 210, Icon = "xp-message")]
@@ -108,13 +111,29 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         formNotification.FormNotificationSendEmailAutoresponder = model.AutoresponderEnabled;
         formNotification.FormNotificationEmailAutoresponderRecipientEmailField = (model.AutoresponderEnabled ? model.AutoresponderRecipientEmailField : null) ?? string.Empty;
         formNotification.FormNotificationEmailAutoresponderSubject = (model.AutoresponderEnabled ? model.AutoresponderSubject : null) ?? string.Empty;
-        formNotification.FormNotificationEmailAutoresponderTemplate = model.AutoresponderEnabled ? model.AutoresponderEmailTemplate.First().EmailGuid : Guid.Empty;
+        formNotification.FormNotificationEmailAutoresponderTemplate = model.AutoresponderEnabled && model.AutoresponderEmailSource == EditModel.EMAIL_SOURCE_EMAIL_CHANNEL && model.AutoresponderEmailChannelConfiguration.Any()
+            ? model.AutoresponderEmailChannelConfiguration.First().EmailGuid 
+            : Guid.Empty;
+        formNotification.FormNotificationEmailAutoresponderEmailTemplate = model.AutoresponderEnabled && model.AutoresponderEmailSource == EditModel.EMAIL_SOURCE_INLINE_MESSAGE 
+            ? model.AutoresponderTemplate 
+            : string.Empty;
+        formNotification.FormNotificationEmailAutoresponderEmailMessage = model.AutoresponderEnabled && model.AutoresponderEmailSource == EditModel.EMAIL_SOURCE_INLINE_MESSAGE
+            ? model.AutoresponderMessage
+            : string.Empty;
         formNotification.FormNotificationEmailAutoresponderIncludeAttachments = model.AutoresponderEnabled && model.AutoresponderIncludeAttachments;
 
         formNotification.FormNotificationSendEmailNotification = model.NotificationEnabled;
         formNotification.FormNotificationEmailNotificationRecipient = (model.NotificationEnabled ? model.NotificationRecipient : null) ?? string.Empty;
         formNotification.FormNotificationEmailNotificationSubject = (model.NotificationEnabled ? model.NotificationSubject : null) ?? string.Empty;
-        formNotification.FormNotificationEmailNotificationTemplate = model.NotificationEnabled ? model.NotificationEmailTemplate.First().EmailGuid : Guid.Empty;
+        formNotification.FormNotificationEmailNotificationTemplate = model.NotificationEnabled && model.NotificationEmailSource == EditModel.EMAIL_SOURCE_EMAIL_CHANNEL && model.NotificationEmailChannelConfiguration.Any()
+            ? model.NotificationEmailChannelConfiguration.First().EmailGuid
+            : Guid.Empty;
+        formNotification.FormNotificationEmailNotificationEmailTemplate = model.NotificationEnabled && model.NotificationEmailSource == EditModel.EMAIL_SOURCE_INLINE_MESSAGE
+            ? model.NotificationTemplate
+            : string.Empty;
+        formNotification.FormNotificationEmailNotificationEmailMessage = model.NotificationEnabled && model.NotificationEmailSource == EditModel.EMAIL_SOURCE_INLINE_MESSAGE
+            ? model.NotificationMessage
+            : string.Empty;
         formNotification.FormNotificationEmailNotificationIncludeAttachments = model.NotificationEnabled && model.NotificationIncludeAttachments;
 
         _formNotificationInfoProvider.Set(formNotification);
@@ -151,17 +170,43 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         model.AutoresponderEnabled = formNotification?.FormNotificationSendEmailAutoresponder ?? false;
         model.AutoresponderRecipientEmailField = model.AutoresponderEnabled ? formNotification?.FormNotificationEmailAutoresponderRecipientEmailField : null;
         model.AutoresponderSubject = model.AutoresponderEnabled ? formNotification?.FormNotificationEmailAutoresponderSubject : null;
-        model.AutoresponderEmailTemplate = formNotification != null && model.AutoresponderEnabled
+        model.AutoresponderEmailSource = model.AutoresponderEnabled && formNotification != null
+            ? formNotification.FormNotificationEmailAutoresponderTemplate != Guid.Empty
+                ? EditModel.EMAIL_SOURCE_EMAIL_CHANNEL
+                : !string.IsNullOrWhiteSpace(formNotification.FormNotificationEmailAutoresponderEmailTemplate)
+                    ? EditModel.EMAIL_SOURCE_INLINE_MESSAGE
+                    : null
+            : null;
+        model.AutoresponderEmailChannelConfiguration = formNotification != null && model.AutoresponderEnabled
             ? new[] { new EmailRelatedItem() { EmailGuid = formNotification.FormNotificationEmailAutoresponderTemplate } }
             : Array.Empty<EmailRelatedItem>();
+        model.AutoresponderTemplate = formNotification != null && model.AutoresponderEnabled
+            ? formNotification.FormNotificationEmailAutoresponderEmailTemplate
+            : null;
+        model.AutoresponderMessage = formNotification != null && model.AutoresponderEnabled
+            ? formNotification.FormNotificationEmailAutoresponderEmailMessage
+            : null;
         model.AutoresponderIncludeAttachments = model.AutoresponderEnabled && (formNotification?.FormNotificationEmailAutoresponderIncludeAttachments ?? false);
 
         model.NotificationEnabled = formNotification?.FormNotificationSendEmailNotification ?? false;
         model.NotificationRecipient = model.NotificationEnabled ? formNotification?.FormNotificationEmailNotificationRecipient : null;
         model.NotificationSubject = model.NotificationEnabled ? formNotification?.FormNotificationEmailNotificationSubject : null;
-        model.NotificationEmailTemplate = formNotification != null && model.NotificationEnabled
+        model.NotificationEmailSource = model.NotificationEnabled && formNotification != null
+            ? formNotification.FormNotificationEmailNotificationTemplate != Guid.Empty
+                ? EditModel.EMAIL_SOURCE_EMAIL_CHANNEL
+                : !string.IsNullOrWhiteSpace(formNotification.FormNotificationEmailNotificationEmailTemplate)
+                    ? EditModel.EMAIL_SOURCE_INLINE_MESSAGE
+                    : null
+            : null;
+        model.NotificationEmailChannelConfiguration = formNotification != null && model.NotificationEnabled
             ? new[] { new EmailRelatedItem() { EmailGuid = formNotification.FormNotificationEmailNotificationTemplate } }
             : Array.Empty<EmailRelatedItem>();
+        model.NotificationTemplate = formNotification != null && model.NotificationEnabled
+            ? formNotification.FormNotificationEmailNotificationEmailTemplate
+            : null;
+        model.NotificationMessage = formNotification != null && model.NotificationEnabled
+            ? formNotification.FormNotificationEmailNotificationEmailMessage
+            : null;
         model.NotificationIncludeAttachments = model.NotificationEnabled && (formNotification?.FormNotificationEmailNotificationIncludeAttachments ?? false);
 
         return model;
@@ -172,6 +217,10 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
     [FormCategory(Label = "Notification", Order = 10)]
     public class EditModel
     {
+        internal const string EMAIL_SOURCE_EMAIL_CHANNEL = "Email channel";
+        internal const string EMAIL_SOURCE_INLINE_MESSAGE = "Inline message";
+        internal const string EMAIL_SOURCE_OPTIONS = ";Select\n" + EMAIL_SOURCE_EMAIL_CHANNEL + "\n" + EMAIL_SOURCE_INLINE_MESSAGE;
+
         [CheckBoxComponent(Label = "Send autoresponder email", Order = 1)]
         public bool AutoresponderEnabled { get; set; }
 
@@ -186,13 +235,28 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         [VisibleIfTrue(nameof(AutoresponderEnabled))]
         public string AutoresponderSubject { get; set; }
 
-        /// <summary>Email to be sent as autoresponder mail.</summary>
-        [EmailSelectorComponent(AllowedEmailPurpose = "FormAutoresponder", Label = "Email", MaximumEmails = 1, Order = 4)]
-        [RequiredIfTrueValidationRule(nameof(AutoresponderEnabled), FieldName = "Email")]
+        [DropDownComponent(Label = "Email source", Options = EMAIL_SOURCE_OPTIONS, Order = 4)]
+        [RequiredIfTrueValidationRule(nameof(AutoresponderEnabled), FieldName = "Recipient email field")]
         [VisibleIfTrue(nameof(AutoresponderEnabled))]
-        public IEnumerable<EmailRelatedItem> AutoresponderEmailTemplate { get; set; }
+        public string AutoresponderEmailSource { get; set; }
 
-        [CheckBoxComponent(Label = "Include attachments", Order = 5)]
+        /// <summary>Email to be sent as autoresponder mail.</summary>
+        [EmailSelectorComponent(AllowedEmailPurpose = "FormAutoresponder", Label = "Email", MaximumEmails = 1, Order = 5)]
+        [RequiredIfTrueValidationRule(nameof(AutoresponderEnabled), FieldName = "Email")]
+        [VisibleIfEqualTo(nameof(AutoresponderEmailSource), "Email channel")]
+        public IEnumerable<EmailRelatedItem> AutoresponderEmailChannelConfiguration { get; set; }
+
+        [DropDownComponent(Label = "Email template", DataProviderType = typeof(EmailTemplateDataProvider), Order = 5)]
+        [RequiredIfTrueValidationRule(nameof(AutoresponderEnabled), FieldName = "Recipient email field")]
+        [VisibleIfEqualTo(nameof(AutoresponderEmailSource), "Inline message")]
+        public string AutoresponderTemplate { get; set; }
+
+        [RichTextEditorComponent(Label = "Message", Order = 6)]
+        [RequiredIfTrueValidationRule(nameof(AutoresponderEnabled), FieldName = "Recipient email field")]
+        [VisibleIfEqualTo(nameof(AutoresponderEmailSource), "Inline message")]
+        public string AutoresponderMessage { get; set; }
+
+        [CheckBoxComponent(Label = "Include attachments", Order = 7)]
         [VisibleIfTrue(nameof(AutoresponderEnabled))]
         public bool AutoresponderIncludeAttachments { get; set; }
 
@@ -205,20 +269,50 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         [VisibleIfTrue(nameof(NotificationEnabled))]
         public string NotificationRecipient { get; set; }
 
-        /// <summary>Indicates the source of autoresponder email.</summary>
+        /// <summary>Indicates the source of Notification email.</summary>
         [TextInputComponent(Label = "Subject", Order = 13, ExplanationText = "Defaults to selected email subject if not specified")]
         [VisibleIfTrue(nameof(NotificationEnabled))]
         public string NotificationSubject { get; set; }
 
-        /// <summary>Email to be sent as autoresponder mail.</summary>
-        [EmailSelectorComponent(AllowedEmailPurpose = "FormAutoresponder", Label = "Email", MaximumEmails = 1, Order = 14)]
-        [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Email")]
+        [DropDownComponent(Label = "Email source", Options = EMAIL_SOURCE_OPTIONS, Order = 14)]
+        [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Recipient email field")]
         [VisibleIfTrue(nameof(NotificationEnabled))]
-        public IEnumerable<EmailRelatedItem> NotificationEmailTemplate { get; set; }
+        public string NotificationEmailSource { get; set; }
 
-        [CheckBoxComponent(Label = "Include attachments", Order = 15)]
+        /// <summary>Email to be sent as Notification mail.</summary>
+        [EmailSelectorComponent(AllowedEmailPurpose = "FormAutoresponder", Label = "Email", MaximumEmails = 1, Order = 15)]
+        [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Email")]
+        [VisibleIfEqualTo(nameof(NotificationEmailSource), "Email channel")]
+        public IEnumerable<EmailRelatedItem> NotificationEmailChannelConfiguration { get; set; }
+
+        [DropDownComponent(Label = "Email template", DataProviderType = typeof(EmailTemplateDataProvider), Order = 15)]
+        [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Recipient email field")]
+        [VisibleIfEqualTo(nameof(NotificationEmailSource), "Inline message")]
+        public string NotificationTemplate { get; set; }
+
+        [RichTextEditorComponent(Label = "Message", Order = 16)]
+        [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Recipient email field")]
+        [VisibleIfEqualTo(nameof(NotificationEmailSource), "Inline message")]
+        public string NotificationMessage { get; set; }
+
+        [CheckBoxComponent(Label = "Include attachments", Order = 17)]
         [VisibleIfTrue(nameof(NotificationEnabled))]
         public bool NotificationIncludeAttachments { get; set; }
 
+    }
+
+    public class EmailTemplateDataProvider : IDropDownOptionsProvider
+    {
+        public Task<IEnumerable<DropDownOptionItem>> GetOptionItems()
+        {
+            var provider = Service.Resolve<IInfoProvider<FormEmailTemplateInfo>>();
+            var results = provider.Get()
+                .OrderBy(nameof(FormEmailTemplateInfo.FormEmailTemplateDisplayName))
+                .ToArray()
+                .Select(x => new DropDownOptionItem { Value = x.FormEmailTemplateName, Text = x.FormEmailTemplateDisplayName })
+                .ToArray();
+
+            return Task.FromResult(results.AsEnumerable());
+        }
     }
 }

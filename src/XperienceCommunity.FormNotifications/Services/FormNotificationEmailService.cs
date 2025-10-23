@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Mail;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using AngleSharp.Css;
 using CMS.ContentEngine.Internal;
 using CMS.Core;
 using CMS.DataEngine;
@@ -16,6 +10,14 @@ using CMS.FormEngine;
 using CMS.IO;
 using CMS.MacroEngine;
 using CMS.OnlineForms;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Mail;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using XperienceCommunity.FormNotifications.Extensions;
 using XperienceCommunity.FormNotifications.Models;
 
@@ -38,6 +40,7 @@ namespace XperienceCommunity.FormNotifications.Services
         private readonly IInfoProvider<EmailChannelSenderInfo> _emailChannelSenderInfoProvider;
         private readonly IInfoProvider<EmailChannelInfo> _emailChannelInfoProvider;
         private readonly IEnumerable<IFormNotificationEmailMessageHandler> _emailMessageHandlers;
+        private readonly IInfoProvider<FormEmailTemplateInfo> _formEmailTemplateInfoProvider;
 
         public FormNotificationEmailService(IEventLogService eventLogService, 
             IEmailService emailService,
@@ -49,7 +52,9 @@ namespace XperienceCommunity.FormNotifications.Services
             IInfoProvider<ContentItemInfo> contentItemInfoProvider,
             IInfoProvider<EmailChannelSenderInfo> emailChannelSenderInfoProvider,
             IInfoProvider<EmailChannelInfo> emailChannelInfoProvider,
-            IEnumerable<IFormNotificationEmailMessageHandler> emailMessageHandlers)
+            IEnumerable<IFormNotificationEmailMessageHandler> emailMessageHandlers,
+            IInfoProvider<FormEmailTemplateInfo> formEmailTemplateInfoProvider
+            )
         {
             _eventLogService = eventLogService;
             _emailService = emailService;
@@ -62,6 +67,7 @@ namespace XperienceCommunity.FormNotifications.Services
             _emailChannelSenderInfoProvider = emailChannelSenderInfoProvider;
             _emailChannelInfoProvider = emailChannelInfoProvider;
             _emailMessageHandlers = emailMessageHandlers;
+            _formEmailTemplateInfoProvider = formEmailTemplateInfoProvider;
         }
 
         public async Task SendFormEmails(BizFormItem bizFormItem)
@@ -125,7 +131,7 @@ namespace XperienceCommunity.FormNotifications.Services
                             var attachments = formNotification.FormNotificationEmailAutoresponderIncludeAttachments
                                 ? bizformAttachments
                                 : null;
-                            await SendEmail(formNotification, formNotification.FormNotificationEmailAutoresponderTemplate, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver, attachments, bizFormItem, true);
+                            await SendEmail(formNotification, formNotification.FormNotificationEmailAutoresponderTemplate, formNotification.FormNotificationEmailAutoresponderEmailTemplate, formNotification.FormNotificationEmailAutoresponderEmailMessage, recipientEmail, formNotification.FormNotificationEmailAutoresponderSubject, dataContext, macroResolver, attachments, bizFormItem, true);
                         }
                         else
                         {
@@ -146,7 +152,7 @@ namespace XperienceCommunity.FormNotifications.Services
                     var attachments = formNotification.FormNotificationEmailNotificationIncludeAttachments
                         ? bizformAttachments
                         : null;
-                    await SendEmail(formNotification, formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver, attachments, bizFormItem, false);
+                    await SendEmail(formNotification, formNotification.FormNotificationEmailNotificationTemplate, formNotification.FormNotificationEmailNotificationEmailTemplate, formNotification.FormNotificationEmailNotificationEmailMessage, formNotification.FormNotificationEmailNotificationRecipient, formNotification.FormNotificationEmailNotificationSubject, dataContext, macroResolver, attachments, bizFormItem, false);
                 }
             }
             catch (Exception ex)
@@ -155,41 +161,78 @@ namespace XperienceCommunity.FormNotifications.Services
             }
         }
 
-        private async Task SendEmail(FormNotificationInfo formNotification, Guid emailConfigurationGuid, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments, BizFormItem bizFormItem, bool isAutoresponder)
+        private async Task SendEmail(FormNotificationInfo formNotification, Guid emailConfigurationGuid, string emailTemplateName, string emailMessage, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments, BizFormItem bizFormItem, bool isAutoresponder)
         {
-            var emailConfiguration = await _emailConfigurationInfoProvider.GetAsync(emailConfigurationGuid);
-            if (emailConfiguration == null)
+            var emailSource = string.Empty;
+            var emailSubject = string.Empty;
+            var emailFrom = string.Empty;
+            EmailConfigurationInfo emailConfiguration = null;
+
+            if (emailConfigurationGuid != Guid.Empty)
             {
-                _eventLogService.LogWarning(nameof(FormNotificationEmailService), nameof(SendEmail), $"Could not find email configuration for '{emailConfigurationGuid}'");
-                return;
+                emailConfiguration = await _emailConfigurationInfoProvider.GetAsync(emailConfigurationGuid);
+                if (emailConfiguration == null)
+                {
+                    _eventLogService.LogWarning(nameof(FormNotificationEmailService), nameof(SendEmail), $"Could not find email configuration for '{emailConfigurationGuid}'");
+                    return;
+                }
+
+                // Get the subject and from address
+                var emailValues = await GetEmailValues(emailConfiguration);
+                emailSubject = emailValues.EmailSubject;
+                var senderMailAddress = await GetSenderMailAddress(emailValues);
+                emailFrom = senderMailAddress.ToString();
+
+                // Process macros in the email body, recipients and subject
+                var emailMarkupBuilder = await _emailMarkupBuilderFactory.Create(emailConfiguration);
+                emailSource = await emailMarkupBuilder.BuildEmailForSending(emailConfiguration);
+            }
+            else if (!string.IsNullOrWhiteSpace(emailTemplateName))
+            {
+                // Get the email template
+                var emailTemplate = _formEmailTemplateInfoProvider.Get()
+                    .WhereEquals(nameof(FormEmailTemplateInfo.FormEmailTemplateName), emailTemplateName)
+                    .First();
+
+                // Resolve the message into the template
+                var templateResolver = MacroResolver.GetInstance();
+                templateResolver.SetNamedSourceData("message", emailMessage);
+                emailSource = templateResolver.ResolveMacros(emailTemplate.FormEmailTemplateSourceCode ?? string.Empty, null);
+
+                emailFrom = emailTemplate.FormEmailTemplateSender;
+                emailSubject = emailTemplate.FormEmailTemplateSubject;
             }
 
-            // Get the subject and from address
-            var emailValues = await GetEmailValues(emailConfiguration);
-            var senderMailAddress = await GetSenderMailAddress(emailValues);
-
-            // Process macros in the email body, recipients and subject
-            var emailMarkupBuilder = await _emailMarkupBuilderFactory.Create(emailConfiguration);
-            var emailSourceCode = await emailMarkupBuilder.BuildEmailForSending(emailConfiguration);
-            var bodyContent = ResolveMacros(macroResolver, emailSourceCode);
+            var bodyContent = ResolveMacros(macroResolver, emailSource);
 
             foreach (IEmailContentFilter emailContentFilter in EmailContentFilterRegister.Instance.GetAll(EmailContentFilterType.Sending))
-                bodyContent = await emailContentFilter.Apply(bodyContent, emailConfiguration, dataContext);
+            {
+                try
+                {
+                    bodyContent = await emailContentFilter.Apply(bodyContent, emailConfiguration, dataContext);
+                }
+                catch (ArgumentNullException ex)
+                {
+                    // Ignore this as it will only come about on filters expecting an email configuration when none is provided
+                }
+            }
 
             var recipients = ResolveMacros(macroResolver, recipient).Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
 
-            subject = ResolveMacros(macroResolver, string.IsNullOrWhiteSpace(subject) ? emailValues.EmailSubject : subject);
+            subject = ResolveMacros(macroResolver, string.IsNullOrWhiteSpace(subject) ? emailSubject : subject);
 
             // Build the email message
             var toSend = new EmailMessage
             {
                 Recipients = string.Join(";", recipients),
                 Subject = subject,
-                From = senderMailAddress.ToString(),
+                From = emailFrom,
                 Body = bodyContent,
-                EmailConfigurationID = emailConfiguration.EmailConfigurationID,
                 MailoutGuid = Guid.NewGuid(),
             };
+
+            if (emailConfiguration != null)
+                toSend.EmailConfigurationID = emailConfiguration.EmailConfigurationID;
 
             // Include any attachments
             if (attachments != null)

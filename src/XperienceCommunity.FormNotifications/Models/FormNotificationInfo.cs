@@ -115,6 +115,28 @@ public partial class FormNotificationInfo : AbstractInfo<FormNotificationInfo, I
 
 
     /// <summary>
+    /// Form notification path.
+    /// </summary>
+    [DatabaseField]
+    public virtual string FormNotificationEmailNotificationEmailTemplate
+    {
+        get => ValidationHelper.GetString(GetValue(nameof(FormNotificationEmailNotificationEmailTemplate)), default);
+        set => SetValue(nameof(FormNotificationEmailNotificationEmailTemplate), value);
+    }
+
+
+    /// <summary>
+    /// Form notification path.
+    /// </summary>
+    [DatabaseField]
+    public virtual string FormNotificationEmailNotificationEmailMessage
+    {
+        get => ValidationHelper.GetString(GetValue(nameof(FormNotificationEmailNotificationEmailMessage)), default);
+        set => SetValue(nameof(FormNotificationEmailNotificationEmailMessage), value);
+    }
+
+
+    /// <summary>
     /// Form notification include attachments.
     /// </summary>
     [DatabaseField]
@@ -166,6 +188,28 @@ public partial class FormNotificationInfo : AbstractInfo<FormNotificationInfo, I
     {
         get => ValidationHelper.GetGuid(GetValue(nameof(FormNotificationEmailAutoresponderTemplate)), default);
         set => SetValue(nameof(FormNotificationEmailAutoresponderTemplate), value);
+    }
+
+
+    /// <summary>
+    /// Form notification path.
+    /// </summary>
+    [DatabaseField]
+    public virtual string FormNotificationEmailAutoresponderEmailTemplate
+    {
+        get => ValidationHelper.GetString(GetValue(nameof(FormNotificationEmailAutoresponderEmailTemplate)), default);
+        set => SetValue(nameof(FormNotificationEmailAutoresponderEmailTemplate), value);
+    }
+
+
+    /// <summary>
+    /// Form notification path.
+    /// </summary>
+    [DatabaseField]
+    public virtual string FormNotificationEmailAutoresponderEmailMessage
+    {
+        get => ValidationHelper.GetString(GetValue(nameof(FormNotificationEmailAutoresponderEmailMessage)), default);
+        set => SetValue(nameof(FormNotificationEmailAutoresponderEmailMessage), value);
     }
 
 
