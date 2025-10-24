@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -83,6 +84,7 @@ namespace XperienceCommunity.FormNotifications.Services
                     return;
 
                 // Initialise the macro resolver with form data properties
+                var formattedHtmlValuesBuilder = new StringBuilder();
                 var macroResolver = MacroResolver.GetInstance();
                 foreach (var propertyName in bizFormItem.Properties)
                 {
@@ -95,7 +97,11 @@ namespace XperienceCommunity.FormNotifications.Services
                     macroResolver.SetNamedSourceData($"label_{propertyName}", formField.Caption);
                     macroResolver.SetNamedSourceData($"value_{propertyName}", value);
                     macroResolver.SetNamedSourceData(propertyName, value);
+
+                    formattedHtmlValuesBuilder.Append($"<p><strong>{System.Web.HttpUtility.HtmlEncode(formField.Caption)}:</strong><br/>{System.Web.HttpUtility.HtmlEncode(value)}</p>");
                 }
+
+                macroResolver.SetNamedSourceData("FormData", formattedHtmlValuesBuilder.ToString());
 
                 // Add the form to the resolver
                 macroResolver.SetNamedSourceData("BizForm", bizFormItem.BizFormInfo);

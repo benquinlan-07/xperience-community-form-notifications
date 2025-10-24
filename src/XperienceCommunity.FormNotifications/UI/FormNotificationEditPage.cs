@@ -251,7 +251,7 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         [VisibleIfEqualTo(nameof(AutoresponderEmailSource), "Inline message")]
         public string AutoresponderTemplate { get; set; }
 
-        [RichTextEditorComponent(Label = "Message", Order = 6)]
+        [RichTextEditorComponent(Label = "Message", Order = 6, ExplanationText = "To automatically output all form data in the message, use the expression {% FormData %}.")]
         [RequiredIfTrueValidationRule(nameof(AutoresponderEnabled), FieldName = "Recipient email field")]
         [VisibleIfEqualTo(nameof(AutoresponderEmailSource), "Inline message")]
         public string AutoresponderMessage { get; set; }
@@ -290,7 +290,7 @@ public class FormNotificationEditPage : ModelEditPage<FormNotificationEditPage.E
         [VisibleIfEqualTo(nameof(NotificationEmailSource), "Inline message")]
         public string NotificationTemplate { get; set; }
 
-        [RichTextEditorComponent(Label = "Message", Order = 16)]
+        [RichTextEditorComponent(Label = "Message", Order = 16, ExplanationText = "To automatically output all form data in the message, use the expression {% FormData %}.")]
         [RequiredIfTrueValidationRule(nameof(NotificationEnabled), FieldName = "Recipient email field")]
         [VisibleIfEqualTo(nameof(NotificationEmailSource), "Inline message")]
         public string NotificationMessage { get; set; }
