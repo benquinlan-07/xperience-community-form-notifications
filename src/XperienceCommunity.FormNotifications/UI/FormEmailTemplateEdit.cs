@@ -16,8 +16,9 @@ public class FormEmailTemplateEdit : FormEmailTemplateCreate
 
     public FormEmailTemplateEdit(IFormItemCollectionProvider formItemCollectionProvider,
         IFormDataBinder formDataBinder,
-        IInfoProvider<FormEmailTemplateInfo> formEmailTemplateInfoProvider)
-        : base(formItemCollectionProvider, formDataBinder, formEmailTemplateInfoProvider)
+        IInfoProvider<FormEmailTemplateInfo> formEmailTemplateInfoProvider,
+        IPageLinkGenerator pageLinkGenerator)
+        : base(formItemCollectionProvider, formDataBinder, formEmailTemplateInfoProvider, pageLinkGenerator)
     {
         _formEmailTemplateInfoProvider = formEmailTemplateInfoProvider;
     }

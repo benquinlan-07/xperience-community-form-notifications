@@ -1,4 +1,5 @@
 ﻿using CMS.DataEngine;
+using CMS.Helpers;
 using Kentico.Xperience.Admin.Base;
 using Kentico.Xperience.Admin.Base.Forms;
 using Kentico.Xperience.Admin.Base.Forms.Internal;
@@ -15,14 +16,17 @@ namespace XperienceCommunity.FormNotifications.UI;
 public class FormEmailTemplateCreate : ModelEditPage<FormEmailTemplateModel>
 {
     private readonly IInfoProvider<FormEmailTemplateInfo> _formEmailTemplateInfoProvider;
+    private readonly IPageLinkGenerator _pageLinkGenerator;
     private FormEmailTemplateModel _model;
 
     public FormEmailTemplateCreate(IFormItemCollectionProvider formItemCollectionProvider,
         IFormDataBinder formDataBinder,
-        IInfoProvider<FormEmailTemplateInfo> formEmailTemplateInfoProvider)
+        IInfoProvider<FormEmailTemplateInfo> formEmailTemplateInfoProvider,
+        IPageLinkGenerator pageLinkGenerator)
         : base(formItemCollectionProvider, formDataBinder)
     {
         _formEmailTemplateInfoProvider = formEmailTemplateInfoProvider;
+        _pageLinkGenerator = pageLinkGenerator;
     }
 
     /// <inheritdoc />
@@ -48,13 +52,9 @@ public class FormEmailTemplateCreate : ModelEditPage<FormEmailTemplateModel>
         _formEmailTemplateInfoProvider.Set(formNotification);
 
         // Initializes a client response
-        var response = ResponseFrom(new FormSubmissionResult(FormSubmissionStatus.ValidationSuccess)
-        {
-            // Returns the submitted field values to the client (repopulates the form)
-            Items = await formItems.OnlyVisible().GetClientProperties(),
-        });
-
-        response.AddSuccessMessage("Email notification settings have been saved.");
+        var editPageUrl = _pageLinkGenerator.GetPath(typeof(FormEmailTemplateEdit), new PageParameterValues() { { typeof(FormEmailTemplateEdit), formNotification.FormEmailTemplateId } });
+        var response = NavigateTo(editPageUrl);
+        response.AddSuccessMessage("From email template was saved");
 
         return response;
     }
