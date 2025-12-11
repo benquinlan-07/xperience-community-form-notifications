@@ -86,19 +86,22 @@ namespace XperienceCommunity.FormNotifications.Services
                 // Initialise the macro resolver with form data properties
                 var formattedHtmlValuesBuilder = new StringBuilder();
                 var macroResolver = MacroResolver.GetInstance();
-                foreach (var propertyName in bizFormItem.Properties)
+                foreach (var formField in bizFormItem.BizFormInfo.Form.ItemsList.OfType<FormFieldInfo>())
                 {
-                    var formField = bizFormItem.BizFormInfo.Form.GetFormField(propertyName);
-                    if (formField == null)
-                        continue;
+                    var value = bizFormItem[formField.Name];
+                    var caption = formField.PrimaryKey ? "ID" : formField.Caption;
+                    if (string.IsNullOrWhiteSpace(caption))
+                        caption = formField.Name;
 
-                    var value = bizFormItem[propertyName];
+                    macroResolver.SetNamedSourceData($"label_{formField.Name}", caption);
+                    macroResolver.SetNamedSourceData($"value_{formField.Name}", value);
+                    macroResolver.SetNamedSourceData(formField.Name, value);
 
-                    macroResolver.SetNamedSourceData($"label_{propertyName}", formField.Caption);
-                    macroResolver.SetNamedSourceData($"value_{propertyName}", value);
-                    macroResolver.SetNamedSourceData(propertyName, value);
+                    var encodedValue = System.Web.HttpUtility.HtmlEncode(value);
+                    if (string.IsNullOrWhiteSpace(encodedValue))
+                        encodedValue = "&nbsp;";
 
-                    formattedHtmlValuesBuilder.Append($"<p><strong>{System.Web.HttpUtility.HtmlEncode(formField.Caption)}:</strong><br/>{System.Web.HttpUtility.HtmlEncode(value)}</p>");
+                    formattedHtmlValuesBuilder.Append($"<p><strong>{System.Web.HttpUtility.HtmlEncode(caption)}:</strong><br/>{encodedValue}</p>");
                 }
 
                 macroResolver.SetNamedSourceData("FormData", formattedHtmlValuesBuilder.ToString());
