@@ -93,15 +93,18 @@ namespace XperienceCommunity.FormNotifications.Services
                     if (string.IsNullOrWhiteSpace(caption))
                         caption = formField.Name;
 
-                    macroResolver.SetNamedSourceData($"label_{formField.Name}", caption);
-                    macroResolver.SetNamedSourceData($"value_{formField.Name}", value);
-                    macroResolver.SetNamedSourceData(formField.Name, value);
-
                     var encodedValue = System.Web.HttpUtility.HtmlEncode(value);
-                    if (string.IsNullOrWhiteSpace(encodedValue))
-                        encodedValue = "&nbsp;";
+                    var encodedCaption = System.Web.HttpUtility.HtmlEncode(caption);
 
-                    formattedHtmlValuesBuilder.Append($"<p><strong>{System.Web.HttpUtility.HtmlEncode(caption)}:</strong><br/>{encodedValue}</p>");
+                    macroResolver.SetNamedSourceData($"label_{formField.Name}", encodedCaption);
+                    macroResolver.SetNamedSourceData($"value_{formField.Name}", encodedValue);
+                    macroResolver.SetNamedSourceData(formField.Name, encodedValue);
+
+                    var formattedValue = encodedValue;
+                    if (string.IsNullOrWhiteSpace(formattedValue))
+                        formattedValue = "&nbsp;";
+
+                    formattedHtmlValuesBuilder.Append($"<p><strong>{encodedCaption}:</strong><br/>{formattedValue}</p>");
                 }
 
                 macroResolver.SetNamedSourceData("FormData", formattedHtmlValuesBuilder.ToString());
