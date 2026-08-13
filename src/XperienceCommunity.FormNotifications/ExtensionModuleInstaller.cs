@@ -273,6 +273,16 @@ internal class ExtensionModuleInstaller
 
         formItem = new FormFieldInfo
         {
+            Name = nameof(FormEmailTemplateInfo.FormEmailTemplateServiceDomain),
+            AllowEmpty = true,
+            Visible = true,
+            Size = 500,
+            DataType = "text"
+        };
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
             Name = nameof(FormEmailTemplateInfo.FormEmailTemplateSubject),
             AllowEmpty = true,
             Visible = true,

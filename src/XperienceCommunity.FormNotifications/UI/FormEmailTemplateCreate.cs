@@ -47,6 +47,7 @@ public class FormEmailTemplateCreate : ModelEditPage<FormEmailTemplateModel>
         formNotification.FormEmailTemplateName = model.Name == "__AUTO__" ? Regex.Replace(model.DisplayName, "[^a-zA-Z0-9]", "") : model.Name;
         formNotification.FormEmailTemplateSubject = model.Subject;
         formNotification.FormEmailTemplateSender = model.Sender;
+        formNotification.FormEmailTemplateServiceDomain = model.ServiceDomain;
         formNotification.FormEmailTemplateSourceCode = model.Template;
 
         _formEmailTemplateInfoProvider.Set(formNotification);
@@ -78,6 +79,7 @@ public class FormEmailTemplateCreate : ModelEditPage<FormEmailTemplateModel>
         model.Name = formNotification?.FormEmailTemplateName;
         model.Subject = formNotification?.FormEmailTemplateSubject;
         model.Sender = formNotification?.FormEmailTemplateSender;
+        model.ServiceDomain = formNotification?.FormEmailTemplateServiceDomain;
         model.Template = formNotification?.FormEmailTemplateSourceCode;
         return model;
     }

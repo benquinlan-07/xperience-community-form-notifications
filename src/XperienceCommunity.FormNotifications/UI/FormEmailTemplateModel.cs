@@ -23,7 +23,10 @@ public class FormEmailTemplateModel
     [RequiredValidationRule]
     public string Sender { get; set; }
 
-    [CodeEditorComponent(Label = "Source", Order = 6, ExplanationText = "Include the macro syntax {% message %} as a placeholder to output the message content.")]
+    [TextInputComponent(Label = "Service domain", Order = 6, ExplanationText = "Domain to resolve relative links to. If not set, falls back to the current channel's primary domain, then the request domain.")]
+    public string ServiceDomain { get; set; }
+
+    [CodeEditorComponent(Label = "Source", Order = 7, ExplanationText = "Include the macro syntax {% message %} as a placeholder to output the message content.")]
     [RequiredValidationRule]
     public string Template { get; set; }
 }

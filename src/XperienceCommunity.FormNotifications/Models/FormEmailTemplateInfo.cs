@@ -114,6 +114,17 @@ public partial class FormEmailTemplateInfo : AbstractInfo<FormEmailTemplateInfo,
 
 
     /// <summary>
+    /// Form Email Template service domain.
+    /// </summary>
+    [DatabaseField]
+    public virtual string FormEmailTemplateServiceDomain
+    {
+        get => ValidationHelper.GetString(GetValue(nameof(FormEmailTemplateServiceDomain)), default);
+        set => SetValue(nameof(FormEmailTemplateServiceDomain), value);
+    }
+
+
+    /// <summary>
     /// Deletes the object using appropriate provider.
     /// </summary>
     protected override void DeleteObject()

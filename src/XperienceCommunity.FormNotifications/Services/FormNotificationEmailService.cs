@@ -136,7 +136,7 @@ namespace XperienceCommunity.FormNotifications.Services
                         if (!string.IsNullOrWhiteSpace(recipientEmail))
                         {
                             var recipient = new Recipient { Email = recipientEmail };
-                            var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient };
+                            var dataContext = new NotificationFormAutoresponderEmailDataContext() { Recipient = recipient };
                             var attachments = formNotification.FormNotificationEmailAutoresponderIncludeAttachments
                                 ? bizformAttachments
                                 : null;
@@ -157,7 +157,7 @@ namespace XperienceCommunity.FormNotifications.Services
                 if (formNotification.FormNotificationSendEmailNotification)
                 {
                     var recipient = new Recipient { Email = formNotification.FormNotificationEmailNotificationRecipient };
-                    var dataContext = new FormAutoresponderEmailDataContext() { Recipient = recipient };
+                    var dataContext = new NotificationFormAutoresponderEmailDataContext() { Recipient = recipient };
                     var attachments = formNotification.FormNotificationEmailNotificationIncludeAttachments
                         ? bizformAttachments
                         : null;
@@ -170,7 +170,7 @@ namespace XperienceCommunity.FormNotifications.Services
             }
         }
 
-        private async Task SendEmail(FormNotificationInfo formNotification, Guid emailConfigurationGuid, string emailTemplateName, string emailMessage, string recipient, string subject, IEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments, BizFormItem bizFormItem, bool isAutoresponder)
+        private async Task SendEmail(FormNotificationInfo formNotification, Guid emailConfigurationGuid, string emailTemplateName, string emailMessage, string recipient, string subject, NotificationFormAutoresponderEmailDataContext dataContext, MacroResolver macroResolver, ICollection<BizFormUploadFile> attachments, BizFormItem bizFormItem, bool isAutoresponder)
         {
             var emailSource = string.Empty;
             var emailSubject = string.Empty;
@@ -202,6 +202,8 @@ namespace XperienceCommunity.FormNotifications.Services
                 var emailTemplate = _formEmailTemplateInfoProvider.Get()
                     .WhereEquals(nameof(FormEmailTemplateInfo.FormEmailTemplateName), emailTemplateName)
                     .First();
+
+                dataContext.FormEmailTemplate = emailTemplate;
 
                 // Resolve the message into the template
                 var templateResolver = MacroResolver.GetInstance();
